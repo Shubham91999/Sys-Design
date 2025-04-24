@@ -1,0 +1,130 @@
+When designing a Linux command using object-oriented programming principles, consider the following problem using a file management command as an example:
+Problem: Designing a command-line tool to manage files, allowing users to list, create, delete, and move files.
+Solution:
+Identify Classes and Objects:
+File: Represents a file with attributes like name, path, size, and type.
+Directory: Represents a directory, containing methods to list files, create/delete files, and move files.
+Command: An abstract class or interface for all commands (list, create, delete, move).
+ListCommand, CreateCommand, DeleteCommand, MoveCommand: Concrete implementations of the Command interface, each handling a specific action.
+Define Relationships:
+Directory can contain multiple File objects.
+Each concrete Command object interacts with File and Directory objects.
+Implement Functionality:
+File class:
+Python
+
+        class File:
+            def __init__(self, name, path, size=0, file_type="file"):
+                self.name = name
+                self.path = path
+                self.size = size
+                self.file_type = file_type
+Directory class.
+Python
+
+        import os
+        
+        class Directory:
+            def __init__(self, path):
+                self.path = path
+        
+            def list_files(self):
+                return os.listdir(self.path)
+        
+            def create_file(self, file_name):
+                with open(os.path.join(self.path, file_name), 'w'):
+                    pass
+        
+            def delete_file(self, file_name):
+                os.remove(os.path.join(self.path, file_name))
+        
+            def move_file(self, old_name, new_path):
+                 os.rename(os.path.join(self.path, old_name), os.path.join(new_path, old_name))
+Command interface and concrete commands.
+Python
+
+        from abc import ABC, abstractmethod
+        
+        class Command(ABC):
+            @abstractmethod
+            def execute(self):
+                pass
+        
+        class ListCommand(Command):
+            def __init__(self, directory):
+                self.directory = directory
+        
+            def execute(self):
+                return self.directory.list_files()
+        
+        class CreateCommand(Command):
+            def __init__(self, directory, file_name):
+                self.directory = directory
+                self.file_name = file_name
+        
+            def execute(self):
+                self.directory.create_file(self.file_name)
+        
+        class DeleteCommand(Command):
+            def __init__(self, directory, file_name):
+                self.directory = directory
+                self.file_name = file_name
+        
+            def execute(self):
+                self.directory.delete_file(self.file_name)
+        
+        class MoveCommand(Command):
+            def __init__(self, directory, old_name, new_path):
+              self.directory = directory
+              self.old_name = old_name
+              self.new_path = new_path
+        
+            def execute(self):
+                self.directory.move_file(self.old_name, self.new_path)
+Handle User Input:
+Parse command-line arguments to determine the action and parameters.
+Create the appropriate Command object based on the input.
+Execute the command.
+Python
+
+    import sys
+    
+    if __name__ == "__main__":
+        command_args = sys.argv[1:]
+        if not command_args:
+            print("Usage: file_manager <command> [options]")
+            sys.exit(1)
+    
+    
+        command_name = command_args[0]
+        current_directory = Directory(os.getcwd())
+    
+        if command_name == "list":
+            list_command = ListCommand(current_directory)
+            print(list_command.execute())
+        elif command_name == "create":
+            if len(command_args) < 2:
+                print("Usage: file_manager create <file_name>")
+                sys.exit(1)
+            file_name = command_args[1]
+            create_command = CreateCommand(current_directory, file_name)
+            create_command.execute()
+        elif command_name == "delete":
+          if len(command_args) < 2:
+                print("Usage: file_manager delete <file_name>")
+                sys.exit(1)
+          file_name = command_args[1]
+          delete_command = DeleteCommand(current_directory, file_name)
+          delete_command.execute()
+        elif command_name == "move":
+          if len(command_args) < 3:
+                print("Usage: file_manager move <old_name> <new_path>")
+                sys.exit(1)
+          old_name = command_args[1]
+          new_path = command_args[2]
+          move_command = MoveCommand(current_directory, old_name, new_path)
+          move_command.execute()
+        else:
+            print("Invalid command.")
+            sys.exit(1)
+This structure allows for easy extension with new commands and functionalities while maintaining a clean, organized codebase.
